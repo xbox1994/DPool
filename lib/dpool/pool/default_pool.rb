@@ -1,7 +1,7 @@
 require 'concurrent'
 module DPool
 
-  class DefinablePool
+  class DefaultPool
 
     def self.rock(working_thread_count)
       @@pool = Concurrent::ThreadPoolExecutor.new(

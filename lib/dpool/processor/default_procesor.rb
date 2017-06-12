@@ -1,9 +1,10 @@
-require_relative '../../../lib/dpool/dispatcher/default_dispatcher'
 module DPool
 
   class DefaultProcessor
     def self.enqueue(&task)
-      DefaultDispatcher.process(&task) if block_given?
+      raise ArgumentError.new('no block given') unless block_given?
+
+      DPool::DefaultPool.getPool.post &task
     end
   end
 

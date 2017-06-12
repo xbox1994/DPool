@@ -1,36 +1,35 @@
-require_relative '../../../lib/dpool/dispatcher/request_limit_dispatcher'
+require_relative '../../../lib/dpool/pool/request_limit_pool'
 module DPool
 
   class RequestLimitProcessor
-
-    def self.setSingleRequestMaxThreadCount(single_request_max_thread_count)
-      @@single_request_max_thread_count = single_request_max_thread_count
-    end
+    attr_reader :taskBuffer
+    attr_reader :result
 
     def initialize
-      p 'please setSingleRequestMaxThreadCount first' if @@single_request_max_thread_count.nil? || @@single_request_max_thread_count == 0
       @taskBuffer = []
-
-
+      @result = []
+      RequestLimitPool.addRequest(self)
     end
 
     def enqueue(&task)
-      if !block_given?
-        raise Exception.new('please give me a task block')
-        return
-      end
-
+      raise ArgumentError.new('no block given') unless block_given?
       @taskBuffer << task
     end
 
-    def allFinished?
-
+    def finished?
+      while !@finished
+        sleep 1
+      end
+      true
     end
 
-    def getResults
-
+    def setFinished
+      @finished = true
     end
-
+    
+    def addToResult(object)
+      @result << object
+    end
   end
 
 end

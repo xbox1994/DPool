@@ -1,9 +1,8 @@
-require_relative '../lib/dpool/definable_pool'
-require_relative '../lib/dpool/dispatcher/default_dispatcher'
+require_relative '../lib/dpool/pool/default_pool'
 require_relative '../lib/dpool/processor/default_procesor'
 
 #install pool
-DPool::DefinablePool.rock(3)
+DPool::DefaultPool.rock(3)
 
 DPool::DefaultProcessor.enqueue do
   loop{

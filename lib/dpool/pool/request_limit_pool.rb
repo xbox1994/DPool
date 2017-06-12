@@ -1,22 +1,26 @@
 require 'concurrent'
 module DPool
 
-  class DefinablePool
+  class RequestLimitPool
 
-    def self.rock(working_thread_count)
+    def self.rock(thread_limit_count, single_request_max_thread_count)
+      @@thread_limit_count = thread_limit_count
+      @@single_request_max_thread_count = single_request_max_thread_count
+      @@bufferQueue = []
+      @@threadCount = 0
+      raise ArgumentError.new('please setSingleRequestMaxThreadCount first') if @@single_request_max_thread_count.nil? || @@single_request_max_thread_count == 0
+
       Thread.new {
         loop do
-
-          next if @@threadCount >= THREAD_LIMIT || !@@bufferQueue[0]
-
+          sleep 0.5
+          p @@threadCount
+          next if @@threadCount >= @@thread_limit_count || !@@bufferQueue[0]
+          current_object = @@bufferQueue.pop
           Thread.new {
-            arr = @@bufferQueue.pop
-            threadBuffer_current = arr[:threadBuffer]
-            current_object = arr[:current_object]
+            threadBuffer_current = current_object.taskBuffer
             while threadBuffer_current.size > 0 do
               threadArray = []
-              thread_count = threadBuffer_current.size < SINGLE_THREAD_LIMIT ? threadBuffer_current.size : SINGLE_THREAD_LIMIT
-              thread_count = thread_count < THREAD_LIMIT - @@threadCount ? thread_count : THREAD_LIMIT - @@threadCount
+              thread_count = [threadBuffer_current.size, @@single_request_max_thread_count, @@thread_limit_count - @@threadCount].min
               thread_count.times {
                 threadArray << Thread.new {
                   @@threadCount += 1
@@ -30,25 +34,10 @@ module DPool
           }
         end
       }
-      @@pool = Concurrent::ThreadPoolExecutor.new(
-          min_threads: 1,
-          max_threads: working_thread_count,
-          idletime: 60
-      )
-      @@working_thread_count = working_thread_count
     end
 
-    def self.getPool
-      @@pool
-    end
-
-    def self.getTotalThreadCountLimit
-      @@working_thread_count
-    end
-
-    def self.shutdown
-      @@pool.shutdown
-      @@pool.wait_for_termination
+    def self.addRequest(request)
+      @@bufferQueue << request
     end
   end
 
